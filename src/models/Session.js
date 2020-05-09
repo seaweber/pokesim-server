@@ -13,8 +13,6 @@ const lobbies = { };
 
 module.exports.createLobby = ( data ) => {
 
-    console.log('CREATE LOBBY');
-    console.log(data);
     lobbies[ data.session_id ] = { player1: data.user_id };
     console.log(lobbies);
 
@@ -27,7 +25,7 @@ module.exports.joinLobby = ( data ) => {
     const { player1, player2 } = lobbies[ data.session_id ];
 
     registerGameSession( data.session_id, player1, player2 )
-        .then( () => eventEmitter.emit('LOBBY_READY'), global_gamestate[ data.session_id ] );
+        .then( () => eventEmitter.emit('LOBBY_READY', global_gamestate[ data.session_id ] ) );
 
     delete lobbies[ data.session_id ];
 
@@ -83,8 +81,6 @@ const registerGameSession = async ( session_id, player1, player2 ) => {
         gamestate.players[ player ].party.map( pokemon => pokemon.alive = true);
     });
 
-    console.log( JSON.stringify( global_gamestate[ session_id ] ,null, 2 ) );
-
     console.log( session_id );
 
     return session_id;
@@ -94,7 +90,7 @@ const registerGameSession = async ( session_id, player1, player2 ) => {
 
 module.exports.retrieveGameState = session_id => {
 
-    return global_gamestate[ session_id ];
+    return global_gamestate[ session_id ] ? global_gamestate[ session_id ] : null;
 };
 
 
@@ -144,6 +140,8 @@ module.exports.attemptSceneTransition = ( session_id, user_id, data ) => {
         if ( data.hasOwnProperty( 'swap' ) ) {
 
             gamestate.players[ user_id ] = { ...gamestate.players[ user_id ], swap: data.swap };
+            console.log( 'swap swap' );
+            console.log( gamestate.players[ user_id ] );
         }
     }
 
