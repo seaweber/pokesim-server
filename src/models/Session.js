@@ -1,6 +1,5 @@
 const EventEmitter = require('events').EventEmitter;
 const axios = require('axios');
-const { uuid } = require('uuidv4');
 
 const User = require('../models/User');
 
@@ -14,7 +13,6 @@ const lobbies = { };
 module.exports.createLobby = ( data ) => {
 
     lobbies[ data.session_id ] = { player1: data.user_id };
-    console.log(lobbies);
 
 };
 
@@ -41,8 +39,6 @@ const registerGameSession = async ( session_id, player1, player2 ) => {
     let player1Party = await User.retrieveParty( player1 );
 
     let player2Party = await User.retrieveParty( player2 );
-
-    // const session_id = 'debug-session-id';//uuid();
 
     module.exports.session_id = session_id;
 
@@ -112,13 +108,11 @@ const reorderParty = ( session_id, user_id ) => {
 // moves selected pokemon to front of players's party
 const swapPokemonInParty = ( session_id, user_id, pokemon_id ) => {
 
-    let party = global_gamestate[ session_id ].players[ user_id ].party;
+    let party = global_gamestate[ session_id ].players[ user_id ].party.filter( pokemon => pokemon.alive );
 
     const pokemon = party.find( pokemon => pokemon.pokedex_id === pokemon_id );
 
-    party = party.filter( pokemon => pokemon.pokedex_id !== pokemon_id );
-
-    party.unshift( pokemon );
+    party.splice(0, 0, party.splice( party.indexOf( pokemon ), 1)[0]);
 
     global_gamestate[ session_id ].players[ user_id ].party = party;
 };
@@ -139,9 +133,7 @@ module.exports.attemptSceneTransition = ( session_id, user_id, data ) => {
 
         if ( data.hasOwnProperty( 'swap' ) ) {
 
-            gamestate.players[ user_id ] = { ...gamestate.players[ user_id ], swap: data.swap };
-            console.log( 'swap swap' );
-            console.log( gamestate.players[ user_id ] );
+            gamestate.players[ user_id ].swap = data.swap;
         }
     }
 
@@ -205,6 +197,8 @@ module.exports.attemptSceneTransition = ( session_id, user_id, data ) => {
 
             swapPokemonInParty( session_id, player1_id, player1.swap );
 
+            delete player1.swap;
+
         }
 
         if ( gamestate.players[ player2_id ].hasOwnProperty('swap') ) {
@@ -212,6 +206,8 @@ module.exports.attemptSceneTransition = ( session_id, user_id, data ) => {
             const player2 = gamestate.players[ player2_id ];
 
             swapPokemonInParty( session_id, player2_id, player2.swap );
+
+            delete player2.swap;
         }
 
         if ( gamestate.scene === 'ORDERING_PARTY' ) {
@@ -230,9 +226,11 @@ module.exports.attemptSceneTransition = ( session_id, user_id, data ) => {
             const [ player1_id, player2_id ] = Object.keys( gamestate.players );
 
             // Retrieve next-up pokemon from both players' parties
-            const [ player1_pokemon, player2_pokemon ] = Object.keys( gamestate.players )
-                .map( key => gamestate.players[ key ].party
-                .find( pokemon => pokemon.alive ) );
+            const player1_pokemon = gamestate.players[ player1_id ].party
+                .find( pokemon => pokemon.alive );
+
+             const player2_pokemon = gamestate.players[ player2_id ].party
+                .find( pokemon => pokemon.alive );
 
             // Simulate battle
             const battleSimResponse = await axios

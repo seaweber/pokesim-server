@@ -30,7 +30,6 @@ module.exports = function indexRouter( io ) {
                     break;
 
                 case 'swap-pokemon':
-                    console.log('BIG SWAP LETS GO');
                     swapPokemon(socket, action.data);
                     break;
 
@@ -39,7 +38,6 @@ module.exports = function indexRouter( io ) {
                     break;
 
                 case 'join-lobby':
-                    console.log(action.data);
                     Session.joinLobby(action.data);
                     break;
             }
