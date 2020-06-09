@@ -7,8 +7,6 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const bodyParser = require('body-parser');
 
-const Session = require('./models/Session');
-
 // general setup
 const app = express();
 
@@ -22,7 +20,6 @@ const indexRouter = require('./routes/indexRouter')( io );
 app.use( ( req,res,next ) => {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    if( req.isAuthenticated() ) res.locals.isAuthenticated = req.isAuthenticated();
     next();
 });
 
